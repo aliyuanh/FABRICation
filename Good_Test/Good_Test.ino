@@ -2,7 +2,7 @@
 #include <cRGB.h>
 #include <WS2812.h>
 
-#define LEDCount 40
+#define LEDCount 120
 #define outputPin 7
 
 WS2812 LED(LEDCount); 
@@ -12,10 +12,16 @@ int mapa;
 int h = 0;   //stores 0 to 614
 byte steps = 15; //number of hues we skip in a 360 range per update
 
+int pin = 9;
 int state = 0;
 
+
 byte sat = 255;
-byte val = 255;
+byte brightness = 255;
+float scale;
+
+int t = 0;
+int threshold;
 
 long sleep = 100; //delays between update
   
@@ -185,6 +191,7 @@ void dmpDataReady() {
 
 void setup() {
     LED.setOutput(outputPin);
+    pinMode(pin, INPUT);
 
     // join I2C bus (I2Cdev library doesn't do this automatically)
     #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -216,10 +223,13 @@ void setup() {
     Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 
     // wait for ready
-    Serial.println(F("\nSend any character to begin DMP programming and demo: "));
-    while (Serial.available() && Serial.read()); // empty buffer
-    while (!Serial.available());                 // wait for data
-    while (Serial.available() && Serial.read()); // empty buffer again
+    
+//    Serial.println(F("\nSend any character to begin DMP programming and demo: "));
+//    while (Serial.available() && Serial.read()); // empty buffer
+//    while (!Serial.available());                 // wait for data
+    while(digitalRead(pin) != HIGH);
+//    while (Serial.available() && Serial.read()); // empty buffer again
+
 
     // load and configure the DMP
     Serial.println(F("Initializing DMP..."));
@@ -274,7 +284,9 @@ void setup() {
 // ===                    MAIN PROGRAM LOOP                     ===
 // ================================================================
 
-void loop() {
+void loop() 
+{
+ 
     // if programming failed, don't try to do anything
     if (!dmpReady) return;
 
@@ -284,16 +296,6 @@ void loop() {
           // try to get out of the infinite loop 
           fifoCount = mpu.getFIFOCount();
         }  
-        // other program behavior stuff here
-        // .
-        // .
-        // .
-        // if you are really paranoid you can frequently test in between other
-        // stuff to see if mpuInterrupt is true, and if so, "break;" from the
-        // while() loop to immediately process the MPU data
-        // .
-        // .
-        // .
     }
 
     // reset interrupt flag and get INT_STATUS byte
@@ -323,30 +325,6 @@ void loop() {
     // (this lets us immediately read more without waiting for an interrupt)
     fifoCount -= packetSize;
   }
-        #ifdef OUTPUT_READABLE_QUATERNION
-            // display quaternion values in easy matrix form: w x y z
-            mpu.dmpGetQuaternion(&q, fifoBuffer);
-            Serial.print("quat\t");
-            Serial.print(q.w);
-            Serial.print("\t");
-            Serial.print(q.x);
-            Serial.print("\t");
-            Serial.print(q.y);
-            Serial.print("\t");
-            Serial.println(q.z);
-        #endif
-
-        #ifdef OUTPUT_READABLE_EULER
-            // display Euler angles in degrees
-            mpu.dmpGetQuaternion(&q, fifoBuffer);
-            mpu.dmpGetEuler(euler, &q);
-            Serial.print("euler\t");
-            Serial.print(euler[0] * 180/M_PI);
-            Serial.print("\t");
-            Serial.print(euler[1] * 180/M_PI);
-            Serial.print("\t");
-            Serial.println(euler[2] * 180/M_PI);
-        #endif
 
         #ifdef OUTPUT_READABLE_YAWPITCHROLL
             // display Euler angles in degrees
@@ -364,8 +342,8 @@ void loop() {
             Serial.print(ypr[1] * 180/M_PI);
             Serial.print("\t");
             Serial.print(ypr[2] * 180/M_PI);
-            Serial.print("\t");
-            //Serial.println(ypr[2] * 180/M_PI);
+//            Serial.println("\t");
+//            Serial.println(ypr[2] * 180/M_PI);
         #endif
 
 
@@ -377,13 +355,78 @@ void loop() {
 //        {
 //          state = 1;
 //        }
-        
-        Serial.println(state);
+
+    // Idea for state / motion detection: check for certain value to initialize or start gesture detection and utilizing milis to check if it does it within a certain time
+    // and if not just reset milis back 
+        //Serial.println(state);
         //Serial.println();
         
-        value.r = map(yaw, -180, 180, 0, 255);
-        value.g = map(pitch, -180, 180, 0, 255);
-        value.b = map(roll, -180, 180, 0, 255);
+        if (abs(yaw) < 90)
+        {
+          value.r = map(abs(yaw), 0, 90, 50, 255);
+        }
+        else
+        {
+          value.r = map(abs(yaw), 90, 180, 255, 50);
+        }
+
+        if (abs(pitch) < 90)
+        {
+          value.g = map(abs(pitch), 0, 90, 50, 255);
+        }
+        else
+        {
+          value.g = map(abs(pitch), 90, 180, 255, 50);
+        }
+
+        if (abs(roll) < 90)
+        {
+          value.b = map(abs(roll), 0, 90, 50, 255);
+        }
+        else
+        {
+          value.b = map(abs(roll), 90, 180, 255, 50);
+        }
+        
+//        if (pitch > -1 && pitch <1)
+//        {
+//          value.g = 50;
+//        }
+//
+//          value.g = map(abs(pitch), 0, 180, 50, 255);
+
+        
+//        if (roll > -1 && roll <1)
+//        {
+//          value.b = 50;
+//        }
+//        else if (roll > 0)
+//        {
+//          value.b = map(roll, 0, 180, 50, 255);
+//        }
+//        else
+//        {
+//          value.b = map(roll, -180, 0, 255, 50);
+//        }
+
+//          value.g = 100;
+//          value.b = 100;
+//        value.g = map(pitch, -180, 180, 0, 255);
+//        value.b = map(roll, -180, 180, 0, 255);
+        
+        scale = (value.r + value.g + value.b) /3;
+        t++;
+
+        brightness = int(100* (sin(t/15.0)+1)/2);
+        
+        
+
+
+            //Serial.print("\t");
+        value.r = value.r * brightness / scale;
+        value.g *= brightness / scale;
+        value.b *= brightness / scale;
+        
 //
 //        value.r = 255;
 //        value.g = 255;
@@ -391,8 +434,14 @@ void loop() {
 //        
 
 //        Serial.print(yaw);
-//        Serial.print("\t");
-//        Serial.println(value.r);
+        Serial.print("\t");
+        Serial.print(value.r);
+        Serial.print("\t");
+        Serial.print(value.g);
+        Serial.print("\t");
+        Serial.print(value.b);
+        Serial.print("\t");
+        Serial.println(brightness);
 //
 //        Serial.print(pitch);
 //        Serial.print("\t");
@@ -478,13 +527,13 @@ void loop() {
   }
 }
 
-void Cycle()
-{
-  value.SetHSV(h, sat, val);
-  
-  h += steps;  
-  if(h > 360)
-  {
-      h %= 360;
-  }
-}
+//void Cycle()
+//{
+//  value.SetHSV(h, sat, val);
+//  
+//  h += steps;  
+//  if(h > 360)
+//  {
+//      h %= 360;
+//  }
+//}
