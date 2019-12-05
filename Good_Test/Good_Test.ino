@@ -39,7 +39,12 @@ int t = 0;
 int threshold;
 
 long sleep = 100; //delays between update
-  
+
+
+// for microphone
+const int sampleWindow = 50; // Sample window width in mS (50 mS = 20Hz)
+unsigned int sample;
+
 // I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class using DMP (MotionApps v2.0)
 // 6/21/2012 by Jeff Rowberg <jeff@rowberg.net>
 // Updates should (hopefully) always be available at https://github.com/jrowberg/i2cdevlib
@@ -376,6 +381,7 @@ void loop()
 //          state = 1;
 //        }
 
+
     // Idea for state / motion detection: check for certain value to initialize or start gesture detection and utilizing milis to check if it does it within a certain time
     // and if not just reset milis back 
         //Serial.println(state);
@@ -535,6 +541,36 @@ void loop()
 //        value.b = 255;
 //      }
 
+        // MICROPHONE STUFF
+       unsigned long startMillis= millis();  // Start of sample window
+       unsigned int peakToPeak = 0;   // peak-to-peak level
+       
+       unsigned int signalMax = 0;
+       unsigned int signalMin = 1024;
+
+       while (millis() - startMillis < sampleWindow)
+       {
+          sample = analogRead(0);
+          if (sample < 1024)  // toss out spurious readings
+          {
+             if (sample > signalMax)
+             {
+                signalMax = sample;  // save just the max levels
+             }
+             else if (sample < signalMin)
+             {
+                signalMin = sample;  // save just the min levels
+             }
+          }
+       }
+       peakToPeak = signalMax - signalMin;  // max - min = peak-peak amplitude
+       double volts = (peakToPeak * 5.0) / 1024;  // convert to volts
+
+       if (volts > 1.5)
+       {
+        // do something (shoot up?) idea also but at this point prob don't want to, but the noise could dictate the pulsing
+       }
+   
         
         for(int i = 0; i < LEDCount1; i++)
         {
