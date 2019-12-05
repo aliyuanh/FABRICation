@@ -2,10 +2,25 @@
 #include <cRGB.h>
 #include <WS2812.h>
 
-#define LEDCount 120
-#define outputPin 7
+#define LEDCount1 30
+#define LEDCount2 30
+#define LEDCount3 30
+#define LEDCount4 30
+#define LEDCount5 30
 
-WS2812 LED(LEDCount); 
+#define outputPin1 7
+#define outputPin2 8
+#define outputPin3 9
+#define outputPin4 10
+#define outputPin5 11
+
+
+WS2812 LED1(LEDCount1);
+WS2812 LED2(LEDCount2); 
+WS2812 LED3(LEDCount3); 
+WS2812 LED4(LEDCount4); 
+WS2812 LED5(LEDCount5); 
+ 
 cRGB value;
 cRGB LEDval;
 int mapa;
@@ -190,7 +205,12 @@ void dmpDataReady() {
 // ================================================================
 
 void setup() {
-    LED.setOutput(outputPin);
+    LED1.setOutput(outputPin1);
+    LED2.setOutput(outputPin2);
+    LED3.setOutput(outputPin3);
+    LED4.setOutput(outputPin4);
+    LED5.setOutput(outputPin5);
+
     pinMode(pin, INPUT);
 
     // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -515,13 +535,53 @@ void loop()
 //        value.b = 255;
 //      }
 
-        for(int i = 0; i < LEDCount; i++)
-        {
-            LED.set_crgb_at(i, value);
-        }
-        LED.sync();
-
         
+        for(int i = 0; i < LEDCount1; i++)
+        {
+            LED1.set_crgb_at(i, value);
+        }
+        LED1.sync();
+
+//        for(int i = 0; i < LEDCount2; i++)
+//        {
+//            LED2.set_crgb_at(i, value);
+//        }
+//        LED2.sync();
+
+//        for(int i = 0; i < LEDCount3; i++)
+//        {
+//            LED3.set_crgb_at(i, value);
+//        }
+//        LED3.sync();
+//
+//        for(int i = 0; i < LEDCount4; i++)
+//        {
+//            LED4.set_crgb_at(i, value);
+//        }
+//        LED4.sync();
+//
+//        for(int i = 0; i < LEDCount5; i++)
+//        {
+//            LED5.set_crgb_at(i, value);
+//        }
+//        LED5.sync();
+
+
+        if (digitalRead(pin) == HIGH)
+        {
+          value.r = 0;
+          value.g = 0;
+          value.b = 0;
+          for(int i = 0; i < LEDCount1; i++)
+          {
+            LED1.set_crgb_at(i, value);
+          }
+        LED1.sync();
+        
+        noInterrupts();
+        while(1)
+        {}
+        }
   
         //delay(sleep); 
   }
